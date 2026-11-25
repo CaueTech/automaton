@@ -7,7 +7,7 @@ interface AutomatonGraphProps {
   activeStates: string[];
   firedTransitions: FiredTransition[];
   finalDecision?: 'accepted' | 'rejected' | null;
-  onMoveNode: (estado: string, pos: NodePosition) => void;
+  onMoveNode: (state: string, pos: NodePosition) => void;
   onAutoLayout: () => void;
 }
 
@@ -34,26 +34,29 @@ export function AutomatonGraph({
   const [draggingState, setDraggingState] = useState<string | null>(null);
 
   const fallbackPositions = useMemo(
-    () => computeAutoLayout(automaton.estados, SVG_WIDTH, SVG_HEIGHT),
-    [automaton.estados],
+    () => computeAutoLayout(automaton.states, SVG_WIDTH, SVG_HEIGHT),
+    [automaton.states],
   );
 
   const positions = useMemo(() => {
     const map: Record<string, NodePosition> = {};
-    for (const estado of automaton.estados) {
-      map[estado] = automaton.posicoes?.[estado] ?? fallbackPositions[estado] ?? { x: 100, y: 150 };
+    for (const state of automaton.states) {
+      map[state] = automaton.positions?.[state] ?? fallbackPositions[state] ?? { x: 100, y: 150 };
     }
     return map;
-  }, [automaton.estados, automaton.posicoes, fallbackPositions]);
+  }, [automaton.states, automaton.positions, fallbackPositions]);
 
   const activeSet = useMemo(() => new Set(activeStates), [activeStates]);
-  const acceptingSet = useMemo(() => new Set(automaton.estadosAceitacao), [automaton.estadosAceitacao]);
+  const acceptingSet = useMemo(
+    () => new Set(automaton.acceptingStates),
+    [automaton.acceptingStates],
+  );
 
   const firedEdgeKeys = useMemo(() => {
     const set = new Set<string>();
-    for (const t of firedTransitions) {
-      for (const dest of t.destinos) {
-        set.add(`${t.origem}->${dest}::${t.simbolo}`);
+    for (const transition of firedTransitions) {
+      for (const dest of transition.to) {
+        set.add(`${transition.from}->${dest}::${transition.symbol}`);
       }
     }
     return set;
@@ -61,25 +64,25 @@ export function AutomatonGraph({
 
   const edges = useMemo<GroupedEdge[]>(() => {
     const grouped = new Map<string, GroupedEdge>();
-    for (const from of automaton.estados) {
-      for (const simbolo of automaton.alfabeto) {
-        const destinos = automaton.transicoes[from]?.[simbolo] ?? [];
-        for (const to of destinos) {
+    for (const from of automaton.states) {
+      for (const symbol of automaton.alphabet) {
+        const destinations = automaton.transitions[from]?.[symbol] ?? [];
+        for (const to of destinations) {
           if (!positions[from] || !positions[to]) continue;
           const key = `${from}->${to}`;
           const existing = grouped.get(key);
-          const fired = firedEdgeKeys.has(`${from}->${to}::${simbolo}`);
+          const fired = firedEdgeKeys.has(`${from}->${to}::${symbol}`);
           if (existing) {
-            existing.symbols.push(simbolo);
+            existing.symbols.push(symbol);
             if (fired) existing.isActive = true;
           } else {
-            grouped.set(key, { from, to, symbols: [simbolo], isActive: fired });
+            grouped.set(key, { from, to, symbols: [symbol], isActive: fired });
           }
         }
       }
     }
     return Array.from(grouped.values());
-  }, [automaton.estados, automaton.alfabeto, automaton.transicoes, positions, firedEdgeKeys]);
+  }, [automaton.states, automaton.alphabet, automaton.transitions, positions, firedEdgeKeys]);
 
   const edgeKeySet = useMemo(() => new Set(edges.map((e) => `${e.from}->${e.to}`)), [edges]);
 
@@ -95,9 +98,9 @@ export function AutomatonGraph({
     };
   };
 
-  const handlePointerDown = (estado: string, e: React.PointerEvent<SVGGElement>) => {
+  const handlePointerDown = (state: string, e: React.PointerEvent<SVGGElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
-    setDraggingState(estado);
+    setDraggingState(state);
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -136,7 +139,7 @@ export function AutomatonGraph({
           className="graph-svg"
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
           role="img"
-          aria-label={`Diagrama de estados do ${automaton.nome}`}
+          aria-label={`Diagrama de estados do ${automaton.name}`}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
@@ -321,13 +324,13 @@ export function AutomatonGraph({
           })}
 
           {/* Initial state entry arrow */}
-          {automaton.estadoInicial && positions[automaton.estadoInicial] && (
+          {automaton.initialState && positions[automaton.initialState] && (
             <g className="initial-arrow">
               <line
-                x1={Math.max(12, positions[automaton.estadoInicial].x - NODE_RADIUS - 38)}
-                y1={positions[automaton.estadoInicial].y}
-                x2={positions[automaton.estadoInicial].x - NODE_RADIUS - 3}
-                y2={positions[automaton.estadoInicial].y}
+                x1={Math.max(12, positions[automaton.initialState].x - NODE_RADIUS - 38)}
+                y1={positions[automaton.initialState].y}
+                x2={positions[automaton.initialState].x - NODE_RADIUS - 3}
+                y2={positions[automaton.initialState].y}
                 stroke="#0f172a"
                 strokeWidth={2}
                 markerEnd="url(#arrow-start)"
@@ -336,10 +339,10 @@ export function AutomatonGraph({
           )}
 
           {/* Nodes (States) */}
-          {automaton.estados.map((estado) => {
-            const pos = positions[estado];
-            const isActive = activeSet.has(estado);
-            const isAccepting = acceptingSet.has(estado);
+          {automaton.states.map((state) => {
+            const pos = positions[state];
+            const isActive = activeSet.has(state);
+            const isAccepting = acceptingSet.has(state);
 
             let nodeClass = 'graph-node';
             if (isActive) {
@@ -351,22 +354,22 @@ export function AutomatonGraph({
                 nodeClass += ' node-active';
               }
             }
-            if (draggingState === estado) {
+            if (draggingState === state) {
               nodeClass += ' node-dragging';
             }
 
             return (
               <g
-                key={estado}
+                key={state}
                 className={nodeClass}
                 transform={`translate(${pos.x}, ${pos.y})`}
-                onPointerDown={(e) => handlePointerDown(estado, e)}
+                onPointerDown={(e) => handlePointerDown(state, e)}
               >
                 {isActive && <circle r={NODE_RADIUS + 5} className="node-halo" />}
                 <circle r={NODE_RADIUS} className="node-circle" />
                 {isAccepting && <circle r={NODE_RADIUS - 5} className="node-inner-circle" />}
                 <text y={5} textAnchor="middle" className="node-label">
-                  {estado}
+                  {state}
                 </text>
               </g>
             );

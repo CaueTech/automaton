@@ -5,12 +5,16 @@ interface AutomatonSidebarProps {
   automata: Automaton[];
   selectedId: string;
   onSelect: (id: string) => void;
-  onCreate: (tipo: AutomatonType) => void;
+  onCreate: (type: AutomatonType) => void;
   onDelete: (id: string) => void;
   onExport: (automaton: Automaton) => void;
   onImport: (jsonText: string) => void;
   onResetPresets: () => void;
   importError: string | null;
+}
+
+function getTypeDisplayLabel(type: AutomatonType): string {
+  return type === 'DFA' ? 'AFD' : 'AFN';
 }
 
 export function AutomatonSidebar({
@@ -51,18 +55,18 @@ export function AutomatonSidebar({
 
       <div className="sidebar-create-group">
         <button
-          id="btn-new-afd"
+          id="btn-new-dfa"
           type="button"
           className="btn btn-primary btn-sm"
-          onClick={() => onCreate('AFD')}
+          onClick={() => onCreate('DFA')}
         >
           + Novo AFD
         </button>
         <button
-          id="btn-new-afn"
+          id="btn-new-nfa"
           type="button"
           className="btn btn-secondary btn-sm"
-          onClick={() => onCreate('AFN')}
+          onClick={() => onCreate('NFA')}
         >
           + Novo AFN
         </button>
@@ -79,15 +83,17 @@ export function AutomatonSidebar({
                 onClick={() => onSelect(item.id)}
                 aria-selected={isSelected}
               >
-                <span className={`type-badge type-${item.tipo.toLowerCase()}`}>{item.tipo}</span>
-                <span className="automaton-item-name">{item.nome}</span>
+                <span className={`type-badge type-${item.type.toLowerCase()}`}>
+                  {getTypeDisplayLabel(item.type)}
+                </span>
+                <span className="automaton-item-name">{item.name}</span>
               </button>
               {automata.length > 1 && (
                 <button
                   type="button"
                   className="icon-btn icon-btn-danger"
-                  title={`Excluir ${item.nome}`}
-                  aria-label={`Excluir ${item.nome}`}
+                  title={`Excluir ${item.name}`}
+                  aria-label={`Excluir ${item.name}`}
                   onClick={() => onDelete(item.id)}
                 >
                   ×

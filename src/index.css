@@ -16,10 +16,10 @@
   --accent-soft: #eff6ff;
   --accent-border: #bfdbfe;
 
-  --afd-bg: #e0f2fe;
-  --afd-ink: #0369a1;
-  --afn-bg: #fef3c7;
-  --afn-ink: #b45309;
+  --dfa-bg: #e0f2fe;
+  --dfa-ink: #0369a1;
+  --nfa-bg: #fef3c7;
+  --nfa-ink: #b45309;
 
   --success: #047857;
   --success-bg: #ecfdf5;
@@ -302,14 +302,14 @@ code,
   flex-shrink: 0;
 }
 
-.type-afd {
-  background: var(--afd-bg);
-  color: var(--afd-ink);
+.type-dfa {
+  background: var(--dfa-bg);
+  color: var(--dfa-ink);
 }
 
-.type-afn {
-  background: var(--afn-bg);
-  color: var(--afn-ink);
+.type-nfa {
+  background: var(--nfa-bg);
+  color: var(--nfa-ink);
 }
 
 .btn {

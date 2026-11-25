@@ -10,69 +10,69 @@ import type {
  * Validates the structural consistency of a DFA (AFD) or NFA (AFN).
  */
 export function validateAutomaton(automaton: Automaton): AutomatonValidationResult {
-  const erros: ValidationIssue[] = [];
-  const stateSet = new Set(automaton.estados);
+  const errors: ValidationIssue[] = [];
+  const stateSet = new Set(automaton.states);
 
-  if (automaton.estados.length === 0) {
-    erros.push({
-      codigo: 'SEM_ESTADOS',
-      mensagem: 'Cadastre pelo menos um estado antes de simular.',
+  if (automaton.states.length === 0) {
+    errors.push({
+      code: 'NO_STATES',
+      message: 'Cadastre pelo menos um estado antes de simular.',
     });
   }
 
-  if (automaton.alfabeto.length === 0) {
-    erros.push({
-      codigo: 'SEM_ALFABETO',
-      mensagem: 'Cadastre pelo menos um símbolo no alfabeto.',
+  if (automaton.alphabet.length === 0) {
+    errors.push({
+      code: 'NO_ALPHABET',
+      message: 'Cadastre pelo menos um símbolo no alfabeto.',
     });
   }
 
-  if (!automaton.estadoInicial || !stateSet.has(automaton.estadoInicial)) {
-    erros.push({
-      codigo: 'INICIAL_INVALIDO',
-      mensagem: 'Selecione um estado inicial válido.',
+  if (!automaton.initialState || !stateSet.has(automaton.initialState)) {
+    errors.push({
+      code: 'INVALID_INITIAL_STATE',
+      message: 'Selecione um estado inicial válido.',
     });
   }
 
-  for (const aceitacao of automaton.estadosAceitacao) {
-    if (!stateSet.has(aceitacao)) {
-      erros.push({
-        codigo: 'ACEITACAO_INVALIDA',
-        mensagem: `O estado de aceitação "${aceitacao}" não existe na lista de estados.`,
-        estado: aceitacao,
+  for (const acceptingState of automaton.acceptingStates) {
+    if (!stateSet.has(acceptingState)) {
+      errors.push({
+        code: 'INVALID_ACCEPTING_STATE',
+        message: `O estado de aceitação "${acceptingState}" não existe na lista de estados.`,
+        state: acceptingState,
       });
     }
   }
 
-  for (const estado of automaton.estados) {
-    for (const simbolo of automaton.alfabeto) {
-      const destinos = automaton.transicoes[estado]?.[simbolo] ?? [];
+  for (const state of automaton.states) {
+    for (const symbol of automaton.alphabet) {
+      const destinations = automaton.transitions[state]?.[symbol] ?? [];
 
-      for (const destino of destinos) {
-        if (!stateSet.has(destino)) {
-          erros.push({
-            codigo: 'DESTINO_INEXISTENTE',
-            mensagem: `A transição δ(${estado}, ${simbolo}) aponta para o estado inexistente "${destino}".`,
-            estado,
-            simbolo,
+      for (const destination of destinations) {
+        if (!stateSet.has(destination)) {
+          errors.push({
+            code: 'UNKNOWN_DESTINATION',
+            message: `A transição δ(${state}, ${symbol}) aponta para o estado inexistente "${destination}".`,
+            state,
+            symbol,
           });
         }
       }
 
-      if (automaton.tipo === 'AFD') {
-        if (destinos.length === 0) {
-          erros.push({
-            codigo: 'AFD_TRANSICAO_INCOMPLETA',
-            mensagem: `No modo AFD, δ(${estado}, ${simbolo}) precisa ter exatamente 1 destino definido.`,
-            estado,
-            simbolo,
+      if (automaton.type === 'DFA') {
+        if (destinations.length === 0) {
+          errors.push({
+            code: 'DFA_INCOMPLETE_TRANSITION',
+            message: `No modo AFD, δ(${state}, ${symbol}) precisa ter exatamente 1 destino definido.`,
+            state,
+            symbol,
           });
-        } else if (destinos.length > 1) {
-          erros.push({
-            codigo: 'AFD_TRANSICAO_NAO_DETERMINISTICA',
-            mensagem: `No modo AFD, δ(${estado}, ${simbolo}) possui ${destinos.length} destinos (${destinos.join(', ')}), mas deve ter apenas 1.`,
-            estado,
-            simbolo,
+        } else if (destinations.length > 1) {
+          errors.push({
+            code: 'DFA_NONDETERMINISTIC_TRANSITION',
+            message: `No modo AFD, δ(${state}, ${symbol}) possui ${destinations.length} destinos (${destinations.join(', ')}), mas deve ter apenas 1.`,
+            state,
+            symbol,
           });
         }
       }
@@ -80,8 +80,8 @@ export function validateAutomaton(automaton: Automaton): AutomatonValidationResu
   }
 
   return {
-    valido: erros.length === 0,
-    erros,
+    valid: errors.length === 0,
+    errors,
   };
 }
 
@@ -89,41 +89,41 @@ export function validateAutomaton(automaton: Automaton): AutomatonValidationResu
  * Validates that every symbol in the input word belongs to the configured alphabet.
  * The empty word ("") is always valid.
  */
-export function validateWord(palavra: string, alfabeto: string[]): WordValidationResult {
-  if (palavra.length === 0) {
-    return { valida: true, simbolosInvalidos: [] };
+export function validateWord(word: string, alphabet: string[]): WordValidationResult {
+  if (word.length === 0) {
+    return { valid: true, invalidSymbols: [] };
   }
 
-  const alphabetSet = new Set(alfabeto);
-  const simbolosInvalidos: InvalidSymbolOccurrence[] = [];
+  const alphabetSet = new Set(alphabet);
+  const invalidSymbols: InvalidSymbolOccurrence[] = [];
 
-  for (let i = 0; i < palavra.length; i++) {
-    const ch = palavra[i];
+  for (let i = 0; i < word.length; i++) {
+    const ch = word[i];
     if (!alphabetSet.has(ch)) {
-      simbolosInvalidos.push({ simbolo: ch, posicao: i + 1 });
+      invalidSymbols.push({ symbol: ch, position: i + 1 });
     }
   }
 
-  if (simbolosInvalidos.length === 0) {
-    return { valida: true, simbolosInvalidos: [] };
+  if (invalidSymbols.length === 0) {
+    return { valid: true, invalidSymbols: [] };
   }
 
-  const alfabetoFmt = `{${alfabeto.join(', ')}}`;
-  let mensagemErro: string;
+  const formattedAlphabet = `{${alphabet.join(', ')}}`;
+  let errorMessage: string;
 
-  if (simbolosInvalidos.length === 1) {
-    const unico = simbolosInvalidos[0];
-    mensagemErro = `Símbolo inválido "${unico.simbolo}" na posição ${unico.posicao}: ele não pertence ao alfabeto cadastrado ${alfabetoFmt}.`;
+  if (invalidSymbols.length === 1) {
+    const single = invalidSymbols[0];
+    errorMessage = `Símbolo inválido "${single.symbol}" na posição ${single.position}: ele não pertence ao alfabeto cadastrado ${formattedAlphabet}.`;
   } else {
-    const detalhes = simbolosInvalidos
-      .map((item) => `"${item.simbolo}" (pos. ${item.posicao})`)
+    const details = invalidSymbols
+      .map((item) => `"${item.symbol}" (pos. ${item.position})`)
       .join(', ');
-    mensagemErro = `Foram encontrados símbolos fora do alfabeto cadastrado ${alfabetoFmt}: ${detalhes}.`;
+    errorMessage = `Foram encontrados símbolos fora do alfabeto cadastrado ${formattedAlphabet}: ${details}.`;
   }
 
   return {
-    valida: false,
-    simbolosInvalidos,
-    mensagemErro,
+    valid: false,
+    invalidSymbols,
+    errorMessage,
   };
 }
