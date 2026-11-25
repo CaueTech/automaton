@@ -6,10 +6,10 @@ export interface NodePosition {
 }
 
 /**
- * Representação unificada para AFD e AFN.
- * Em ambos os modos, transicoes[estado][simbolo] é uma lista de estados destino:
- * - No AFD, deve conter exatamente 1 estado.
- * - No AFN, pode conter 0, 1 ou vários estados.
+ * Unified representation for both DFA (AFD) and NFA (AFN).
+ * In both modes, transicoes[state][symbol] is a list of destination states:
+ * - In DFA mode, it must contain exactly 1 state.
+ * - In NFA mode, it may contain 0, 1, or multiple states.
  */
 export interface Automaton {
   id: string;
@@ -45,7 +45,7 @@ export interface AutomatonValidationResult {
 
 export interface InvalidSymbolOccurrence {
   simbolo: string;
-  posicao: number; // 1-indexed para exibição didática
+  posicao: number; // 1-indexed for user-facing display
 }
 
 export interface WordValidationResult {
@@ -61,7 +61,7 @@ export interface FiredTransition {
 }
 
 export interface SimulationStep {
-  indice: number; // 1-indexed (passo 1 = 1º símbolo lido)
+  indice: number; // 1-indexed (step 1 = 1st symbol read)
   simbolo: string;
   estadosAntes: string[];
   estadosDepois: string[];

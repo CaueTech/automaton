@@ -7,7 +7,7 @@ import type {
 } from './types.ts';
 
 /**
- * Valida a consistência estrutural de um AFD ou AFN.
+ * Validates the structural consistency of a DFA (AFD) or NFA (AFN).
  */
 export function validateAutomaton(automaton: Automaton): AutomatonValidationResult {
   const erros: ValidationIssue[] = [];
@@ -86,8 +86,8 @@ export function validateAutomaton(automaton: Automaton): AutomatonValidationResu
 }
 
 /**
- * Valida se todos os símbolos da palavra pertencem ao alfabeto cadastrado.
- * A palavra vazia ("") é sempre válida.
+ * Validates that every symbol in the input word belongs to the configured alphabet.
+ * The empty word ("") is always valid.
  */
 export function validateWord(palavra: string, alfabeto: string[]): WordValidationResult {
   if (palavra.length === 0) {

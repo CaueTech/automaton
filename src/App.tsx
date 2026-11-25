@@ -32,7 +32,7 @@ export function App() {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [importError, setImportError] = useState<string | null>(null);
 
-  // Persistência automática no localStorage
+  // Automatic persistence to localStorage
   useEffect(() => {
     saveAutomataToStorage(automata);
   }, [automata]);
@@ -42,7 +42,7 @@ export function App() {
     [automata, selectedId],
   );
 
-  // Garante que selectedId sempre aponte para um autômato existente
+  // Ensure selectedId always points to an existing automaton
   useEffect(() => {
     if (currentAutomaton && currentAutomaton.id !== selectedId) {
       setSelectedId(currentAutomaton.id);
@@ -73,7 +73,7 @@ export function App() {
     }
   };
 
-  // --- Gerenciamento de autômatos ---
+  // --- Automaton management ---
   const handleSelectAutomaton = (id: string) => {
     setSelectedId(id);
     setImportError(null);
@@ -135,7 +135,7 @@ export function App() {
     clearSimulation();
   };
 
-  // --- Edição do autômato atual ---
+  // --- Current automaton editing ---
   const handleChangeName = (nome: string) => {
     updateCurrentAutomaton((prev) => ({ ...prev, nome }), false);
   };
@@ -148,7 +148,7 @@ export function App() {
         transicoes[estado] = {};
         for (const simbolo of prev.alfabeto) {
           const atual = prev.transicoes[estado]?.[simbolo] ?? [];
-          // Ao converter AFN -> AFD, mantém apenas o primeiro destino se houver vários
+          // When converting NFA -> DFA, keep only the first destination if multiple exist
           transicoes[estado][simbolo] = tipo === 'AFD' ? atual.slice(0, 1) : [...atual];
         }
       }
@@ -304,7 +304,7 @@ export function App() {
     );
   };
 
-  // --- Simulação ---
+  // --- Simulation ---
   const handleChangeWord = (nextWord: string) => {
     setWord(nextWord);
     clearSimulation();

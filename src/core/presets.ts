@@ -1,8 +1,8 @@
 import type { Automaton, AutomatonType, NodePosition } from './types.ts';
 
 /**
- * Calcula posições bem distribuídas para o grafo SVG (layout horizontal para até 4 estados,
- * ou circular para quantidades maiores).
+ * Computes evenly spaced node coordinates for the SVG graph (horizontal layout for up to 4 states,
+ * or elliptical layout for larger state sets).
  */
 export function computeAutoLayout(
   estados: string[],
@@ -45,8 +45,8 @@ export function computeAutoLayout(
 }
 
 /**
- * Modelos obrigatórios do experimento descrito no edital:
- * palavras binárias terminadas em "01" (AFD e AFN).
+ * Required experiment presets described in the assignment:
+ * DFA (AFD) and NFA (AFN) recognizing binary words ending in "01".
  */
 export function getPresetAutomata(): Automaton[] {
   return [

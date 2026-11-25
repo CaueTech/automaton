@@ -63,7 +63,7 @@ export function saveAutomataToStorage(automata: Automaton[]): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(automata));
   } catch {
-    // Ignora erros de quota ou modo privado sem quebrar a aplicação
+    // Ignore quota or private-mode storage errors without breaking the app
   }
 }
 

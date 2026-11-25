@@ -1,58 +1,58 @@
-# Automaton — Simulador de Autômatos Finitos (AFD / AFN)
+# Automaton — Finite Automaton Simulator (DFA / NFA)
 
-Aplicação web em **React + TypeScript + Vite** inspirada no [JFLAP](https://www.jflap.org/), desenvolvida para a disciplina de **Teoria da Computação** (Universidade Senai Cimatec).
+A **React + TypeScript + Vite** web application inspired by [JFLAP](https://www.jflap.org/), built for the **Theory of Computation** course (Universidade Senai Cimatec).
 
-## Funcionalidades
+## Features
 
-- **Construção de AFDs e AFNs sem alterar o código-fonte:** escolha do modelo, cadastro do alfabeto ($\Sigma$), estados ($Q$), estado inicial ($q_0$), estados de aceitação ($F$) e tabela de transições ($\delta$) editável.
-- **Validação automática:**
-  - No modo **AFD**, garante exatamente 1 destino por par `(estado, símbolo)`.
-  - No modo **AFN**, permite 0, 1 ou múltiplos destinos por par `(estado, símbolo)`.
-  - Na entrada da palavra, identifica símbolos fora do alfabeto cadastrado e explica o erro.
-- **Visualização sincronizada:** tabela de transições editável lado a lado com o **grafo visual interativo em SVG** (com suporte a arrastar estados e botão de auto-organizar).
-- **Simulação completa e passo a passo:** exibe fita de leitura, símbolo atual, estados ativos antes e depois da leitura, transições disparadas e veredito final justificado (incluindo suporte à palavra vazia $\varepsilon$).
-- **Persistência e modelos do experimento:** salvamento automático no `localStorage`, importação/exportação em JSON e presets prontos para **AFD** e **AFN** de palavras binárias terminadas em `01`.
+- **Build DFAs and NFAs without editing source code:** choose the model (`AFD` / `AFN`), configure the alphabet ($\Sigma$), states ($Q$), initial state ($q_0$), accepting states ($F$), and an editable transition table ($\delta$).
+- **Built-in validation:**
+  - In **DFA (`AFD`)** mode, enforces exactly 1 destination state per `(state, symbol)` pair.
+  - In **NFA (`AFN`)** mode, allows 0, 1, or multiple destination states per `(state, symbol)` pair.
+  - On word input, detects any symbol outside the configured alphabet and explains the exact error and position.
+- **Synchronized views:** editable transition table side by side with an **interactive SVG state diagram** (supports dragging nodes and an auto-layout action).
+- **Full and step-by-step simulation:** displays the input tape, current symbol, active states before and after reading, fired transitions, empty word ($\varepsilon$) support, and a justified accept/reject verdict.
+- **Persistence & experiment presets:** automatic persistence in `localStorage`, JSON import/export, and built-in presets for the **DFA** and **NFA** recognizing binary strings ending in `01`.
 
-## Como executar
+## Getting Started
 
-### Pré-requisitos
-- [Node.js](https://nodejs.org/) 18+ (recomendado 22+)
+### Prerequisites
+- [Node.js](https://nodejs.org/) 18+ (22+ recommended to run the native TypeScript test suite)
 
-### Instalação e execução local
+### Install and run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Acesse o endereço exibido no terminal (por padrão `http://localhost:5173`).
+Open the local URL printed in your terminal (by default `http://localhost:5173`).
 
-### Testes do motor de simulação
+### Run simulation engine tests
 
 ```bash
 npm test
 ```
 
-## Estrutura do projeto
+## Project Structure
 
 ```text
 src/
 ├── core/
-│   ├── types.ts              # Tipos de Autômato, Passo e Resultado
-│   ├── validator.ts          # Validações de AFD/AFN e alfabeto
-│   ├── simulator.ts          # Motor de simulação completa e passo a passo
-│   └── presets.ts            # Presets do experimento (AFD e AFN - termina em 01)
+│   ├── types.ts              # Automaton, simulation step, and result types
+│   ├── validator.ts          # DFA/NFA structural rules and alphabet validation
+│   ├── simulator.ts          # Full and step-by-step simulation engine
+│   └── presets.ts            # Experiment presets (DFA & NFA ending in 01) and layout helper
 ├── storage/
-│   └── automataStorage.ts    # Persistência em localStorage e import/export JSON
+│   └── automataStorage.ts    # localStorage persistence and JSON import/export
 ├── components/
-│   ├── AutomatonSidebar.tsx  # Gerenciamento de autômatos salvos
-│   ├── AutomatonEditor.tsx   # Configuração de modelo, alfabeto e estados
-│   ├── TransitionTable.tsx   # Tabela de transições editável
-│   ├── AutomatonGraph.tsx    # Grafo visual SVG interativo
-│   └── SimulationPanel.tsx   # Simulação, controles passo a passo e justificativa
-├── App.tsx                   # Orquestração da aplicação
-├── main.tsx                  # Ponto de entrada React
-└── index.css                 # Estilos (Vanilla CSS)
+│   ├── AutomatonSidebar.tsx  # Saved automata manager, import/export, preset restore
+│   ├── AutomatonEditor.tsx   # Model type, alphabet, states, initial and accepting flags
+│   ├── TransitionTable.tsx   # Editable transition table synchronized with simulation
+│   ├── AutomatonGraph.tsx    # Interactive SVG graph with live active-state highlighting
+│   └── SimulationPanel.tsx   # Word input, step-by-step controls, trace, and verdict
+├── App.tsx                   # Main application state and layout composition
+├── main.tsx                  # React entry point
+└── index.css                 # Design tokens and layout styles (Vanilla CSS)
 tests/
-└── simulator.test.ts         # Testes unitários do motor e validações
+└── simulator.test.ts         # Unit tests for validation and simulation engine
 ```

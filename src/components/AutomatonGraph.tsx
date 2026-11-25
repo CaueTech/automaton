@@ -177,7 +177,7 @@ export function AutomatonGraph({
             </marker>
           </defs>
 
-          {/* Arestas */}
+          {/* Edges */}
           {edges.map((edge) => {
             const p1 = positions[edge.from];
             const p2 = positions[edge.to];
@@ -186,7 +186,7 @@ export function AutomatonGraph({
             const strokeWidth = edge.isActive ? 2.6 : 1.75;
             const marker = edge.isActive ? 'url(#arrow-active)' : 'url(#arrow-default)';
 
-            // Auto-laço
+            // Self-loop
             if (edge.from === edge.to) {
               const startX = p1.x - 12;
               const startY = p1.y - NODE_RADIUS + 2;
@@ -233,7 +233,7 @@ export function AutomatonGraph({
             const hasReverse = edgeKeySet.has(`${edge.to}->${edge.from}`);
 
             if (hasReverse) {
-              // Curva suave para arestas bidirecionais
+              // Smooth curve for bidirectional edges
               const nx = -uy;
               const ny = ux;
               const curveOffset = 34;
@@ -281,7 +281,7 @@ export function AutomatonGraph({
               );
             }
 
-            // Aresta reta
+            // Straight edge
             const startX = p1.x + ux * NODE_RADIUS;
             const startY = p1.y + uy * NODE_RADIUS;
             const endX = p2.x - ux * (NODE_RADIUS + 3);
@@ -320,7 +320,7 @@ export function AutomatonGraph({
             );
           })}
 
-          {/* Seta de estado inicial */}
+          {/* Initial state entry arrow */}
           {automaton.estadoInicial && positions[automaton.estadoInicial] && (
             <g className="initial-arrow">
               <line
@@ -335,7 +335,7 @@ export function AutomatonGraph({
             </g>
           )}
 
-          {/* Nós (Estados) */}
+          {/* Nodes (States) */}
           {automaton.estados.map((estado) => {
             const pos = positions[estado];
             const isActive = activeSet.has(estado);

@@ -11,7 +11,7 @@ interface SimulationPanelProps {
   word: string;
   wordValidation: WordValidationResult;
   simulation: SimulationResult | null;
-  currentStepIndex: number; // 0 = estado inicial (antes de ler símbolos), 1..N = após símbolo i
+  currentStepIndex: number; // 0 = initial state (before reading symbols), 1..N = after symbol i
   onChangeWord: (word: string) => void;
   onRunFull: () => void;
   onStartStepByStep: () => void;
@@ -142,7 +142,7 @@ export function SimulationPanel({
 
       {simulation && (
         <div className="sim-results">
-          {/* Controles passo a passo e fita de leitura */}
+          {/* Step-by-step controls and input tape */}
           <div className="sim-stepper-bar">
             <div className="tape-container" aria-label="Fita de símbolos da palavra">
               <span className="tape-title">Fita:</span>
@@ -201,7 +201,7 @@ export function SimulationPanel({
             </div>
           </div>
 
-          {/* Inspetor do passo atual */}
+          {/* Current step inspector */}
           <div className="step-inspector">
             {currentStepIndex === 0 ? (
               <div className="step-cards">
@@ -276,7 +276,7 @@ export function SimulationPanel({
             ) : null}
           </div>
 
-          {/* Veredito final */}
+          {/* Final verdict */}
           {isFinished && (
             <div
               className={`verdict-banner ${simulation.aceita ? 'verdict-accepted' : 'verdict-rejected'}`}
@@ -313,7 +313,7 @@ export function SimulationPanel({
             </div>
           )}
 
-          {/* Histórico de passos */}
+          {/* Step history */}
           {simulation.passos.length > 0 && (
             <div className="history-section">
               <h3>Histórico de leitura</h3>

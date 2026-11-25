@@ -13,8 +13,8 @@ function sortByStateOrder(states: Set<string>, order: string[]): string[] {
 }
 
 /**
- * Executa a simulação completa de um AFD ou AFN sobre uma palavra (incluindo palavra vazia).
- * Retorna todos os passos intermediários (para suportar execução passo a passo) e a justificativa final.
+ * Runs a full simulation of a DFA (AFD) or NFA (AFN) on the given input word (including empty word).
+ * Returns every intermediate step (to power step-by-step execution) along with the final justification.
  */
 export function simulateAutomaton(automaton: Automaton, palavra: string): SimulationResult {
   const acceptingSet = new Set(automaton.estadosAceitacao);
@@ -102,7 +102,7 @@ function buildJustification(params: {
     return `A palavra foi rejeitada porque, ao final da leitura, o AFD terminou no estado ${estadoFinal}, que não é um estado de aceitação.`;
   }
 
-  // AFN
+  // NFA (AFN)
   const ativosFmt = `{${estadosFinaisAtivos.join(', ')}}`;
   if (aceita) {
     const aceitosFmt = estadosAceitacaoAlcancados.join(', ');

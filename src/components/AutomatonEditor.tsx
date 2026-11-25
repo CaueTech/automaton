@@ -116,7 +116,7 @@ export function AutomatonEditor({
       {automaton.descricao && <p className="editor-description">{automaton.descricao}</p>}
 
       <div className="editor-grid">
-        {/* Alfabeto */}
+        {/* Alphabet */}
         <div className="editor-block">
           <div className="block-header">
             <h3>Alfabeto (Σ)</h3>
@@ -163,7 +163,7 @@ export function AutomatonEditor({
           </div>
         </div>
 
-        {/* Estados */}
+        {/* States */}
         <div className="editor-block">
           <div className="block-header">
             <h3>Estados (Q)</h3>
