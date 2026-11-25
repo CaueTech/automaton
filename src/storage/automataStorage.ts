@@ -1,40 +1,40 @@
 import type { Automaton } from '../core/types.ts';
 import { computeAutoLayout, getPresetAutomata } from '../core/presets.ts';
 
-const STORAGE_KEY = 'automaton_simulator_models_v1';
+const STORAGE_KEY = 'automaton_simulator_models_v2';
 
 function isValidAutomatonShape(raw: unknown): raw is Automaton {
   if (!raw || typeof raw !== 'object') return false;
   const obj = raw as Record<string, unknown>;
   return (
     typeof obj.id === 'string' &&
-    typeof obj.nome === 'string' &&
-    (obj.tipo === 'AFD' || obj.tipo === 'AFN') &&
-    Array.isArray(obj.alfabeto) &&
-    Array.isArray(obj.estados) &&
-    typeof obj.estadoInicial === 'string' &&
-    Array.isArray(obj.estadosAceitacao) &&
-    typeof obj.transicoes === 'object' &&
-    obj.transicoes !== null
+    typeof obj.name === 'string' &&
+    (obj.type === 'DFA' || obj.type === 'NFA') &&
+    Array.isArray(obj.alphabet) &&
+    Array.isArray(obj.states) &&
+    typeof obj.initialState === 'string' &&
+    Array.isArray(obj.acceptingStates) &&
+    typeof obj.transitions === 'object' &&
+    obj.transitions !== null
   );
 }
 
-function normalizeAutomaton(a: Automaton): Automaton {
-  const transicoes: Record<string, Record<string, string[]>> = {};
-  for (const estado of a.estados) {
-    transicoes[estado] = {};
-    for (const simbolo of a.alfabeto) {
-      const destinos = a.transicoes[estado]?.[simbolo];
-      transicoes[estado][simbolo] = Array.isArray(destinos)
-        ? destinos.filter((d) => a.estados.includes(d))
+function normalizeAutomaton(automaton: Automaton): Automaton {
+  const transitions: Record<string, Record<string, string[]>> = {};
+  for (const state of automaton.states) {
+    transitions[state] = {};
+    for (const symbol of automaton.alphabet) {
+      const destinations = automaton.transitions[state]?.[symbol];
+      transitions[state][symbol] = Array.isArray(destinations)
+        ? destinations.filter((dest) => automaton.states.includes(dest))
         : [];
     }
   }
 
   return {
-    ...a,
-    transicoes,
-    posicoes: a.posicoes ?? computeAutoLayout(a.estados),
+    ...automaton,
+    transitions,
+    positions: automaton.positions ?? computeAutoLayout(automaton.states),
   };
 }
 
@@ -71,12 +71,15 @@ export function exportAutomatonToJson(automaton: Automaton): string {
   return JSON.stringify(automaton, null, 2);
 }
 
-export function parseAutomatonFromJson(jsonText: string): { automaton?: Automaton; erro?: string } {
+export function parseAutomatonFromJson(
+  jsonText: string,
+): { automaton?: Automaton; error?: string } {
   try {
     const parsed: unknown = JSON.parse(jsonText);
     if (!isValidAutomatonShape(parsed)) {
       return {
-        erro: 'O arquivo JSON não segue o formato esperado de um autômato (tipo, alfabeto, estados, estadoInicial, estadosAceitacao e transicoes).',
+        error:
+          'O arquivo JSON não segue o formato esperado de um autômato (type, alphabet, states, initialState, acceptingStates e transitions).',
       };
     }
 
@@ -87,6 +90,6 @@ export function parseAutomatonFromJson(jsonText: string): { automaton?: Automato
 
     return { automaton: normalized };
   } catch {
-    return { erro: 'Não foi possível ler o arquivo JSON. Verifique se a sintaxe é válida.' };
+    return { error: 'Não foi possível ler o arquivo JSON. Verifique se a sintaxe é válida.' };
   }
 }

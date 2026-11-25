@@ -4,14 +4,14 @@ import type { Automaton, AutomatonType, AutomatonValidationResult } from '../cor
 interface AutomatonEditorProps {
   automaton: Automaton;
   validation: AutomatonValidationResult;
-  onChangeName: (nome: string) => void;
-  onChangeType: (tipo: AutomatonType) => void;
-  onAddSymbol: (simbolo: string) => void;
-  onRemoveSymbol: (simbolo: string) => void;
-  onAddState: (estado: string) => void;
-  onRemoveState: (estado: string) => void;
-  onSetInitialState: (estado: string) => void;
-  onToggleAcceptingState: (estado: string) => void;
+  onChangeName: (name: string) => void;
+  onChangeType: (type: AutomatonType) => void;
+  onAddSymbol: (symbol: string) => void;
+  onRemoveSymbol: (symbol: string) => void;
+  onAddState: (state: string) => void;
+  onRemoveState: (state: string) => void;
+  onSetInitialState: (state: string) => void;
+  onToggleAcceptingState: (state: string) => void;
 }
 
 export function AutomatonEditor({
@@ -31,9 +31,11 @@ export function AutomatonEditor({
   const [symbolError, setSymbolError] = useState<string | null>(null);
   const [stateError, setStateError] = useState<string | null>(null);
 
+  const typeLabel = automaton.type === 'DFA' ? 'AFD' : 'AFN';
+
   const suggestNextState = (): string => {
-    let idx = automaton.estados.length;
-    while (automaton.estados.includes(`q${idx}`)) {
+    let idx = automaton.states.length;
+    while (automaton.states.includes(`q${idx}`)) {
       idx++;
     }
     return `q${idx}`;
@@ -50,7 +52,7 @@ export function AutomatonEditor({
       setSymbolError('Cada símbolo do alfabeto deve ter exatamente 1 caractere.');
       return;
     }
-    if (automaton.alfabeto.includes(cleaned)) {
+    if (automaton.alphabet.includes(cleaned)) {
       setSymbolError(`O símbolo "${cleaned}" já está no alfabeto.`);
       return;
     }
@@ -62,7 +64,7 @@ export function AutomatonEditor({
   const handleAddState = (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned = stateInput.trim() || suggestNextState();
-    if (automaton.estados.includes(cleaned)) {
+    if (automaton.states.includes(cleaned)) {
       setStateError(`O estado "${cleaned}" já existe.`);
       return;
     }
@@ -80,7 +82,7 @@ export function AutomatonEditor({
             id="automaton-name"
             type="text"
             className="text-input"
-            value={automaton.nome}
+            value={automaton.name}
             onChange={(e) => onChangeName(e.target.value)}
             placeholder="Ex.: AFN — Termina em 01"
           />
@@ -90,22 +92,22 @@ export function AutomatonEditor({
           <span className="field-label">Modelo</span>
           <div className="segmented-control" role="radiogroup" aria-label="Tipo de autômato">
             <button
-              id="mode-afd"
+              id="mode-dfa"
               type="button"
               role="radio"
-              aria-checked={automaton.tipo === 'AFD'}
-              className={`segmented-btn ${automaton.tipo === 'AFD' ? 'active' : ''}`}
-              onClick={() => onChangeType('AFD')}
+              aria-checked={automaton.type === 'DFA'}
+              className={`segmented-btn ${automaton.type === 'DFA' ? 'active' : ''}`}
+              onClick={() => onChangeType('DFA')}
             >
               AFD
             </button>
             <button
-              id="mode-afn"
+              id="mode-nfa"
               type="button"
               role="radio"
-              aria-checked={automaton.tipo === 'AFN'}
-              className={`segmented-btn ${automaton.tipo === 'AFN' ? 'active' : ''}`}
-              onClick={() => onChangeType('AFN')}
+              aria-checked={automaton.type === 'NFA'}
+              className={`segmented-btn ${automaton.type === 'NFA' ? 'active' : ''}`}
+              onClick={() => onChangeType('NFA')}
             >
               AFN
             </button>
@@ -113,7 +115,7 @@ export function AutomatonEditor({
         </div>
       </div>
 
-      {automaton.descricao && <p className="editor-description">{automaton.descricao}</p>}
+      {automaton.description && <p className="editor-description">{automaton.description}</p>}
 
       <div className="editor-grid">
         {/* Alphabet */}
@@ -144,20 +146,20 @@ export function AutomatonEditor({
           {symbolError && <p className="field-error">{symbolError}</p>}
 
           <div className="chip-list">
-            {automaton.alfabeto.map((simbolo) => (
-              <span key={simbolo} className="chip chip-mono">
-                {simbolo}
+            {automaton.alphabet.map((symbol) => (
+              <span key={symbol} className="chip chip-mono">
+                {symbol}
                 <button
                   type="button"
                   className="chip-remove"
-                  aria-label={`Remover símbolo ${simbolo}`}
-                  onClick={() => onRemoveSymbol(simbolo)}
+                  aria-label={`Remover símbolo ${symbol}`}
+                  onClick={() => onRemoveSymbol(symbol)}
                 >
                   ×
                 </button>
               </span>
             ))}
-            {automaton.alfabeto.length === 0 && (
+            {automaton.alphabet.length === 0 && (
               <span className="empty-hint">Nenhum símbolo cadastrado.</span>
             )}
           </div>
@@ -191,17 +193,17 @@ export function AutomatonEditor({
           {stateError && <p className="field-error">{stateError}</p>}
 
           <div className="state-config-list">
-            {automaton.estados.map((estado) => {
-              const isInitial = automaton.estadoInicial === estado;
-              const isAccepting = automaton.estadosAceitacao.includes(estado);
+            {automaton.states.map((state) => {
+              const isInitial = automaton.initialState === state;
+              const isAccepting = automaton.acceptingStates.includes(state);
               return (
-                <div key={estado} className="state-config-item">
-                  <span className="state-name-mono">{estado}</span>
+                <div key={state} className="state-config-item">
+                  <span className="state-name-mono">{state}</span>
                   <div className="state-config-controls">
                     <button
                       type="button"
                       className={`mini-toggle ${isInitial ? 'is-initial' : ''}`}
-                      onClick={() => onSetInitialState(estado)}
+                      onClick={() => onSetInitialState(state)}
                       title="Marcar como estado inicial"
                     >
                       → Inicial
@@ -209,7 +211,7 @@ export function AutomatonEditor({
                     <button
                       type="button"
                       className={`mini-toggle ${isAccepting ? 'is-accepting' : ''}`}
-                      onClick={() => onToggleAcceptingState(estado)}
+                      onClick={() => onToggleAcceptingState(state)}
                       title="Alternar estado de aceitação"
                     >
                       * Aceitação
@@ -217,9 +219,9 @@ export function AutomatonEditor({
                     <button
                       type="button"
                       className="icon-btn icon-btn-danger"
-                      aria-label={`Remover estado ${estado}`}
-                      title={`Remover estado ${estado}`}
-                      onClick={() => onRemoveState(estado)}
+                      aria-label={`Remover estado ${state}`}
+                      title={`Remover estado ${state}`}
+                      onClick={() => onRemoveState(state)}
                     >
                       ×
                     </button>
@@ -227,22 +229,22 @@ export function AutomatonEditor({
                 </div>
               );
             })}
-            {automaton.estados.length === 0 && (
+            {automaton.states.length === 0 && (
               <span className="empty-hint">Nenhum estado cadastrado.</span>
             )}
           </div>
         </div>
       </div>
 
-      {!validation.valido && (
+      {!validation.valid && (
         <div className="alert alert-warning" role="status">
-          <strong>Atenção na definição do {automaton.tipo}:</strong>
+          <strong>Atenção na definição do {typeLabel}:</strong>
           <ul>
-            {validation.erros.slice(0, 4).map((erro, idx) => (
-              <li key={`${erro.codigo}-${idx}`}>{erro.mensagem}</li>
+            {validation.errors.slice(0, 4).map((issue, idx) => (
+              <li key={`${issue.code}-${idx}`}>{issue.message}</li>
             ))}
-            {validation.erros.length > 4 && (
-              <li>...e mais {validation.erros.length - 4} pendência(s).</li>
+            {validation.errors.length > 4 && (
+              <li>...e mais {validation.errors.length - 4} pendência(s).</li>
             )}
           </ul>
         </div>

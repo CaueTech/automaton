@@ -4,8 +4,8 @@ interface TransitionTableProps {
   automaton: Automaton;
   activeStates: string[];
   firedTransitions: FiredTransition[];
-  onSetDfaTransition: (estado: string, simbolo: string, destino: string) => void;
-  onToggleNfaTransition: (estado: string, simbolo: string, destino: string) => void;
+  onSetDfaTransition: (state: string, symbol: string, destination: string) => void;
+  onToggleNfaTransition: (state: string, symbol: string, destination: string) => void;
 }
 
 export function TransitionTable({
@@ -16,7 +16,7 @@ export function TransitionTable({
   onToggleNfaTransition,
 }: TransitionTableProps) {
   const activeSet = new Set(activeStates);
-  const firedCellKeys = new Set(firedTransitions.map((t) => `${t.origem}::${t.simbolo}`));
+  const firedCellKeys = new Set(firedTransitions.map((t) => `${t.from}::${t.symbol}`));
 
   return (
     <section className="panel table-panel" aria-label="Tabela de transições editável">
@@ -24,14 +24,14 @@ export function TransitionTable({
         <div>
           <h2>Tabela de Transições (δ)</h2>
           <p className="panel-subtitle">
-            {automaton.tipo === 'AFD'
+            {automaton.type === 'DFA'
               ? 'Modo AFD: cada par (estado, símbolo) exige exatamente 1 destino.'
               : 'Modo AFN: clique nos estados para ativar 0, 1 ou múltiplos destinos.'}
           </p>
         </div>
       </div>
 
-      {automaton.estados.length === 0 || automaton.alfabeto.length === 0 ? (
+      {automaton.states.length === 0 || automaton.alphabet.length === 0 ? (
         <p className="empty-hint">
           Cadastre pelo menos um estado e um símbolo no alfabeto para preencher a tabela.
         </p>
@@ -41,21 +41,21 @@ export function TransitionTable({
             <thead>
               <tr>
                 <th scope="col">Estado</th>
-                {automaton.alfabeto.map((simbolo) => (
-                  <th key={simbolo} scope="col" className="col-symbol">
-                    {simbolo}
+                {automaton.alphabet.map((symbol) => (
+                  <th key={symbol} scope="col" className="col-symbol">
+                    {symbol}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {automaton.estados.map((estado) => {
-                const isInitial = automaton.estadoInicial === estado;
-                const isAccepting = automaton.estadosAceitacao.includes(estado);
-                const isActive = activeSet.has(estado);
+              {automaton.states.map((state) => {
+                const isInitial = automaton.initialState === state;
+                const isAccepting = automaton.acceptingStates.includes(state);
+                const isActive = activeSet.has(state);
 
                 return (
-                  <tr key={estado} className={isActive ? 'row-active' : ''}>
+                  <tr key={state} className={isActive ? 'row-active' : ''}>
                     <th scope="row" className="state-cell">
                       <span className="state-markers">
                         {isInitial && (
@@ -69,17 +69,17 @@ export function TransitionTable({
                           </span>
                         )}
                       </span>
-                      <span className="state-label-mono">{estado}</span>
+                      <span className="state-label-mono">{state}</span>
                     </th>
 
-                    {automaton.alfabeto.map((simbolo) => {
-                      const destinos = automaton.transicoes[estado]?.[simbolo] ?? [];
-                      const isFired = firedCellKeys.has(`${estado}::${simbolo}`);
-                      const isMissingDfa = automaton.tipo === 'AFD' && destinos.length !== 1;
+                    {automaton.alphabet.map((symbol) => {
+                      const destinations = automaton.transitions[state]?.[symbol] ?? [];
+                      const isFired = firedCellKeys.has(`${state}::${symbol}`);
+                      const isMissingDfa = automaton.type === 'DFA' && destinations.length !== 1;
 
                       return (
                         <td
-                          key={simbolo}
+                          key={symbol}
                           className={[
                             'transition-cell',
                             isFired ? 'cell-fired' : '',
@@ -88,15 +88,15 @@ export function TransitionTable({
                             .filter(Boolean)
                             .join(' ')}
                         >
-                          {automaton.tipo === 'AFD' ? (
+                          {automaton.type === 'DFA' ? (
                             <select
-                              aria-label={`Transição AFD de ${estado} com símbolo ${simbolo}`}
+                              aria-label={`Transição AFD de ${state} com símbolo ${symbol}`}
                               className="dfa-select"
-                              value={destinos[0] ?? ''}
-                              onChange={(e) => onSetDfaTransition(estado, simbolo, e.target.value)}
+                              value={destinations[0] ?? ''}
+                              onChange={(e) => onSetDfaTransition(state, symbol, e.target.value)}
                             >
                               <option value="">— Selecione —</option>
-                              {automaton.estados.map((dest) => (
+                              {automaton.states.map((dest) => (
                                 <option key={dest} value={dest}>
                                   {dest}
                                 </option>
@@ -104,15 +104,15 @@ export function TransitionTable({
                             </select>
                           ) : (
                             <div className="nfa-dest-group">
-                              {automaton.estados.map((dest) => {
-                                const selected = destinos.includes(dest);
+                              {automaton.states.map((dest) => {
+                                const selected = destinations.includes(dest);
                                 return (
                                   <button
                                     key={dest}
                                     type="button"
                                     className={`nfa-dest-chip ${selected ? 'selected' : ''}`}
                                     aria-pressed={selected}
-                                    onClick={() => onToggleNfaTransition(estado, simbolo, dest)}
+                                    onClick={() => onToggleNfaTransition(state, symbol, dest)}
                                   >
                                     {dest}
                                   </button>

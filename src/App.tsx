@@ -55,8 +55,8 @@ export function App() {
   );
 
   const wordValidation = useMemo(
-    () => validateWord(word, currentAutomaton.alfabeto),
-    [word, currentAutomaton.alfabeto],
+    () => validateWord(word, currentAutomaton.alphabet),
+    [word, currentAutomaton.alphabet],
   );
 
   const clearSimulation = () => {
@@ -80,10 +80,10 @@ export function App() {
     clearSimulation();
   };
 
-  const handleCreateAutomaton = (tipo: AutomatonType) => {
-    const novo = createEmptyAutomaton(tipo, automata.length);
-    setAutomata((prev) => [...prev, novo]);
-    setSelectedId(novo.id);
+  const handleCreateAutomaton = (type: AutomatonType) => {
+    const created = createEmptyAutomaton(type, automata.length);
+    setAutomata((prev) => [...prev, created]);
+    setSelectedId(created.id);
     setImportError(null);
     clearSimulation();
   };
@@ -103,20 +103,20 @@ export function App() {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const safeName = automaton.nome
+    const safeName = automaton.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
     link.href = url;
-    link.download = `${safeName || 'automato'}.json`;
+    link.download = `${safeName || 'automaton'}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const handleImportAutomaton = (jsonText: string) => {
-    const { automaton, erro } = parseAutomatonFromJson(jsonText);
-    if (erro || !automaton) {
-      setImportError(erro ?? 'Falha ao importar JSON.');
+    const { automaton, error } = parseAutomatonFromJson(jsonText);
+    if (error || !automaton) {
+      setImportError(error ?? 'Falha ao importar JSON.');
       return;
     }
     setImportError(null);
@@ -136,158 +136,158 @@ export function App() {
   };
 
   // --- Current automaton editing ---
-  const handleChangeName = (nome: string) => {
-    updateCurrentAutomaton((prev) => ({ ...prev, nome }), false);
+  const handleChangeName = (name: string) => {
+    updateCurrentAutomaton((prev) => ({ ...prev, name }), false);
   };
 
-  const handleChangeType = (tipo: AutomatonType) => {
+  const handleChangeType = (type: AutomatonType) => {
     updateCurrentAutomaton((prev) => {
-      if (prev.tipo === tipo) return prev;
-      const transicoes: Record<string, Record<string, string[]>> = {};
-      for (const estado of prev.estados) {
-        transicoes[estado] = {};
-        for (const simbolo of prev.alfabeto) {
-          const atual = prev.transicoes[estado]?.[simbolo] ?? [];
+      if (prev.type === type) return prev;
+      const transitions: Record<string, Record<string, string[]>> = {};
+      for (const state of prev.states) {
+        transitions[state] = {};
+        for (const symbol of prev.alphabet) {
+          const current = prev.transitions[state]?.[symbol] ?? [];
           // When converting NFA -> DFA, keep only the first destination if multiple exist
-          transicoes[estado][simbolo] = tipo === 'AFD' ? atual.slice(0, 1) : [...atual];
+          transitions[state][symbol] = type === 'DFA' ? current.slice(0, 1) : [...current];
         }
       }
-      return { ...prev, tipo, transicoes };
+      return { ...prev, type, transitions };
     });
   };
 
-  const handleAddSymbol = (simbolo: string) => {
+  const handleAddSymbol = (symbol: string) => {
     updateCurrentAutomaton((prev) => {
-      const alfabeto = [...prev.alfabeto, simbolo];
-      const transicoes: Record<string, Record<string, string[]>> = {};
-      for (const estado of prev.estados) {
-        transicoes[estado] = {
-          ...(prev.transicoes[estado] ?? {}),
-          [simbolo]: [],
+      const alphabet = [...prev.alphabet, symbol];
+      const transitions: Record<string, Record<string, string[]>> = {};
+      for (const state of prev.states) {
+        transitions[state] = {
+          ...(prev.transitions[state] ?? {}),
+          [symbol]: [],
         };
       }
-      return { ...prev, alfabeto, transicoes };
+      return { ...prev, alphabet, transitions };
     });
   };
 
-  const handleRemoveSymbol = (simbolo: string) => {
+  const handleRemoveSymbol = (symbol: string) => {
     updateCurrentAutomaton((prev) => {
-      const alfabeto = prev.alfabeto.filter((s) => s !== simbolo);
-      const transicoes: Record<string, Record<string, string[]>> = {};
-      for (const estado of prev.estados) {
-        const copy = { ...(prev.transicoes[estado] ?? {}) };
-        delete copy[simbolo];
-        transicoes[estado] = copy;
+      const alphabet = prev.alphabet.filter((s) => s !== symbol);
+      const transitions: Record<string, Record<string, string[]>> = {};
+      for (const state of prev.states) {
+        const copy = { ...(prev.transitions[state] ?? {}) };
+        delete copy[symbol];
+        transitions[state] = copy;
       }
-      return { ...prev, alfabeto, transicoes };
+      return { ...prev, alphabet, transitions };
     });
   };
 
-  const handleAddState = (estado: string) => {
+  const handleAddState = (state: string) => {
     updateCurrentAutomaton((prev) => {
-      const estados = [...prev.estados, estado];
-      const transicoes: Record<string, Record<string, string[]>> = { ...prev.transicoes };
-      transicoes[estado] = {};
-      for (const simbolo of prev.alfabeto) {
-        transicoes[estado][simbolo] = [];
+      const states = [...prev.states, state];
+      const transitions: Record<string, Record<string, string[]>> = { ...prev.transitions };
+      transitions[state] = {};
+      for (const symbol of prev.alphabet) {
+        transitions[state][symbol] = [];
       }
-      const autoPos = computeAutoLayout(estados);
-      const posicoes: Record<string, NodePosition> = {
-        ...(prev.posicoes ?? {}),
-        [estado]: autoPos[estado],
+      const autoPositions = computeAutoLayout(states);
+      const positions: Record<string, NodePosition> = {
+        ...(prev.positions ?? {}),
+        [state]: autoPositions[state],
       };
       return {
         ...prev,
-        estados,
-        estadoInicial: prev.estadoInicial || estado,
-        transicoes,
-        posicoes,
+        states,
+        initialState: prev.initialState || state,
+        transitions,
+        positions,
       };
     });
   };
 
-  const handleRemoveState = (estado: string) => {
+  const handleRemoveState = (state: string) => {
     updateCurrentAutomaton((prev) => {
-      const estados = prev.estados.filter((e) => e !== estado);
-      const estadosAceitacao = prev.estadosAceitacao.filter((e) => e !== estado);
-      const estadoInicial =
-        prev.estadoInicial === estado ? (estados[0] ?? '') : prev.estadoInicial;
+      const states = prev.states.filter((s) => s !== state);
+      const acceptingStates = prev.acceptingStates.filter((s) => s !== state);
+      const initialState =
+        prev.initialState === state ? (states[0] ?? '') : prev.initialState;
 
-      const transicoes: Record<string, Record<string, string[]>> = {};
-      for (const origem of estados) {
-        transicoes[origem] = {};
-        for (const simbolo of prev.alfabeto) {
-          const destinos = prev.transicoes[origem]?.[simbolo] ?? [];
-          transicoes[origem][simbolo] = destinos.filter((d) => d !== estado);
+      const transitions: Record<string, Record<string, string[]>> = {};
+      for (const from of states) {
+        transitions[from] = {};
+        for (const symbol of prev.alphabet) {
+          const destinations = prev.transitions[from]?.[symbol] ?? [];
+          transitions[from][symbol] = destinations.filter((d) => d !== state);
         }
       }
 
-      const posicoes = { ...(prev.posicoes ?? {}) };
-      delete posicoes[estado];
+      const positions = { ...(prev.positions ?? {}) };
+      delete positions[state];
 
       return {
         ...prev,
-        estados,
-        estadoInicial,
-        estadosAceitacao,
-        transicoes,
-        posicoes,
+        states,
+        initialState,
+        acceptingStates,
+        transitions,
+        positions,
       };
     });
   };
 
-  const handleSetInitialState = (estado: string) => {
-    updateCurrentAutomaton((prev) => ({ ...prev, estadoInicial: estado }));
+  const handleSetInitialState = (state: string) => {
+    updateCurrentAutomaton((prev) => ({ ...prev, initialState: state }));
   };
 
-  const handleToggleAcceptingState = (estado: string) => {
+  const handleToggleAcceptingState = (state: string) => {
     updateCurrentAutomaton((prev) => {
-      const exists = prev.estadosAceitacao.includes(estado);
-      const estadosAceitacao = exists
-        ? prev.estadosAceitacao.filter((e) => e !== estado)
-        : [...prev.estadosAceitacao, estado];
-      return { ...prev, estadosAceitacao };
+      const exists = prev.acceptingStates.includes(state);
+      const acceptingStates = exists
+        ? prev.acceptingStates.filter((s) => s !== state)
+        : [...prev.acceptingStates, state];
+      return { ...prev, acceptingStates };
     });
   };
 
-  const handleSetDfaTransition = (estado: string, simbolo: string, destino: string) => {
+  const handleSetDfaTransition = (state: string, symbol: string, destination: string) => {
     updateCurrentAutomaton((prev) => ({
       ...prev,
-      transicoes: {
-        ...prev.transicoes,
-        [estado]: {
-          ...(prev.transicoes[estado] ?? {}),
-          [simbolo]: destino ? [destino] : [],
+      transitions: {
+        ...prev.transitions,
+        [state]: {
+          ...(prev.transitions[state] ?? {}),
+          [symbol]: destination ? [destination] : [],
         },
       },
     }));
   };
 
-  const handleToggleNfaTransition = (estado: string, simbolo: string, destino: string) => {
+  const handleToggleNfaTransition = (state: string, symbol: string, destination: string) => {
     updateCurrentAutomaton((prev) => {
-      const atual = prev.transicoes[estado]?.[simbolo] ?? [];
-      const exists = atual.includes(destino);
-      const next = exists ? atual.filter((d) => d !== destino) : [...atual, destino];
+      const current = prev.transitions[state]?.[symbol] ?? [];
+      const exists = current.includes(destination);
+      const next = exists ? current.filter((d) => d !== destination) : [...current, destination];
       return {
         ...prev,
-        transicoes: {
-          ...prev.transicoes,
-          [estado]: {
-            ...(prev.transicoes[estado] ?? {}),
-            [simbolo]: next,
+        transitions: {
+          ...prev.transitions,
+          [state]: {
+            ...(prev.transitions[state] ?? {}),
+            [symbol]: next,
           },
         },
       };
     });
   };
 
-  const handleMoveNode = (estado: string, pos: NodePosition) => {
+  const handleMoveNode = (state: string, pos: NodePosition) => {
     updateCurrentAutomaton(
       (prev) => ({
         ...prev,
-        posicoes: {
-          ...(prev.posicoes ?? {}),
-          [estado]: pos,
+        positions: {
+          ...(prev.positions ?? {}),
+          [state]: pos,
         },
       }),
       false,
@@ -298,7 +298,7 @@ export function App() {
     updateCurrentAutomaton(
       (prev) => ({
         ...prev,
-        posicoes: computeAutoLayout(prev.estados),
+        positions: computeAutoLayout(prev.states),
       }),
       false,
     );
@@ -311,14 +311,14 @@ export function App() {
   };
 
   const handleRunFull = () => {
-    if (!automatonValidation.valido || !wordValidation.valida) return;
+    if (!automatonValidation.valid || !wordValidation.valid) return;
     const result = simulateAutomaton(currentAutomaton, word);
     setSimulation(result);
-    setCurrentStepIndex(result.passos.length);
+    setCurrentStepIndex(result.steps.length);
   };
 
   const handleStartStepByStep = () => {
-    if (!automatonValidation.valido || !wordValidation.valida) return;
+    if (!automatonValidation.valid || !wordValidation.valid) return;
     const result = simulateAutomaton(currentAutomaton, word);
     setSimulation(result);
     setCurrentStepIndex(0);
@@ -327,20 +327,22 @@ export function App() {
   const activeStatesForVisuals = useMemo(() => {
     if (!simulation) return [];
     if (currentStepIndex === 0) {
-      return currentAutomaton.estadoInicial ? [currentAutomaton.estadoInicial] : [];
+      return currentAutomaton.initialState ? [currentAutomaton.initialState] : [];
     }
-    return simulation.passos[currentStepIndex - 1]?.estadosDepois ?? [];
-  }, [simulation, currentStepIndex, currentAutomaton.estadoInicial]);
+    return simulation.steps[currentStepIndex - 1]?.statesAfter ?? [];
+  }, [simulation, currentStepIndex, currentAutomaton.initialState]);
 
   const firedTransitionsForVisuals = useMemo(() => {
     if (!simulation || currentStepIndex === 0) return [];
-    return simulation.passos[currentStepIndex - 1]?.transicoesDisparadas ?? [];
+    return simulation.steps[currentStepIndex - 1]?.firedTransitions ?? [];
   }, [simulation, currentStepIndex]);
 
   const finalDecisionForGraph = useMemo<'accepted' | 'rejected' | null>(() => {
-    if (!simulation || currentStepIndex !== simulation.passos.length) return null;
-    return simulation.aceita ? 'accepted' : 'rejected';
+    if (!simulation || currentStepIndex !== simulation.steps.length) return null;
+    return simulation.accepted ? 'accepted' : 'rejected';
   }, [simulation, currentStepIndex]);
+
+  const currentTypeLabel = currentAutomaton.type === 'DFA' ? 'AFD' : 'AFN';
 
   return (
     <div className="app-shell">
@@ -352,10 +354,10 @@ export function App() {
           </span>
         </div>
         <div className="header-meta">
-          <span className={`type-badge type-${currentAutomaton.tipo.toLowerCase()}`}>
-            {currentAutomaton.tipo}
+          <span className={`type-badge type-${currentAutomaton.type.toLowerCase()}`}>
+            {currentTypeLabel}
           </span>
-          <span className="header-model-name">{currentAutomaton.nome}</span>
+          <span className="header-model-name">{currentAutomaton.name}</span>
         </div>
       </header>
 
@@ -418,7 +420,7 @@ export function App() {
             onPrevStep={() => setCurrentStepIndex((i) => Math.max(0, i - 1))}
             onNextStep={() =>
               setCurrentStepIndex((i) =>
-                simulation ? Math.min(simulation.passos.length, i + 1) : i,
+                simulation ? Math.min(simulation.steps.length, i + 1) : i,
               )
             }
             onJumpToStep={(idx) => setCurrentStepIndex(idx)}

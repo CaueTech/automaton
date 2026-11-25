@@ -43,18 +43,19 @@ export function SimulationPanel({
   onJumpToStep,
   onResetSimulation,
 }: SimulationPanelProps) {
-  const canSimulate = automatonValidation.valido && wordValidation.valida;
-  const totalSteps = simulation?.passos.length ?? 0;
+  const typeLabel = automaton.type === 'DFA' ? 'AFD' : 'AFN';
+  const canSimulate = automatonValidation.valid && wordValidation.valid;
+  const totalSteps = simulation?.steps.length ?? 0;
   const isFinished = simulation !== null && currentStepIndex === totalSteps;
   const currentStep =
-    simulation && currentStepIndex > 0 ? simulation.passos[currentStepIndex - 1] : null;
+    simulation && currentStepIndex > 0 ? simulation.steps[currentStepIndex - 1] : null;
 
   const currentActiveStates = simulation
     ? currentStepIndex === 0
-      ? automaton.estadoInicial
-        ? [automaton.estadoInicial]
+      ? automaton.initialState
+        ? [automaton.initialState]
         : []
-      : simulation.passos[currentStepIndex - 1].estadosDepois
+      : simulation.steps[currentStepIndex - 1].statesAfter
     : [];
 
   return (
@@ -128,15 +129,15 @@ export function SimulationPanel({
         ))}
       </div>
 
-      {!wordValidation.valida && wordValidation.mensagemErro && (
+      {!wordValidation.valid && wordValidation.errorMessage && (
         <div className="alert alert-error" role="alert">
-          <strong>Entrada inválida:</strong> {wordValidation.mensagemErro}
+          <strong>Entrada inválida:</strong> {wordValidation.errorMessage}
         </div>
       )}
 
-      {!automatonValidation.valido && (
+      {!automatonValidation.valid && (
         <div className="alert alert-warning" role="status">
-          Corrija as pendências na definição do {automaton.tipo} acima antes de executar a simulação.
+          Corrija as pendências na definição do {typeLabel} acima antes de executar a simulação.
         </div>
       )}
 
@@ -146,11 +147,11 @@ export function SimulationPanel({
           <div className="sim-stepper-bar">
             <div className="tape-container" aria-label="Fita de símbolos da palavra">
               <span className="tape-title">Fita:</span>
-              {simulation.palavraVazia ? (
+              {simulation.isEmptyWord ? (
                 <span className="tape-cell tape-cell-active">ε</span>
               ) : (
                 <div className="tape-cells">
-                  {simulation.palavra.split('').map((ch, idx) => {
+                  {simulation.word.split('').map((ch, idx) => {
                     const stepNum = idx + 1;
                     const isCurrent = stepNum === currentStepIndex;
                     const isRead = stepNum < currentStepIndex;
@@ -212,9 +213,9 @@ export function SimulationPanel({
                 <div className="step-metric">
                   <span className="metric-label">Estados ativos</span>
                   <div className="state-badge-row">
-                    {currentActiveStates.map((s) => (
-                      <span key={s} className="state-pill state-pill-active">
-                        {s}
+                    {currentActiveStates.map((state) => (
+                      <span key={state} className="state-pill state-pill-active">
+                        {state}
                       </span>
                     ))}
                   </div>
@@ -224,17 +225,17 @@ export function SimulationPanel({
               <>
                 <div className="step-cards">
                   <div className="step-metric">
-                    <span className="metric-label">Símbolo lido (pos. {currentStep.indice})</span>
-                    <span className="metric-value metric-symbol">{currentStep.simbolo}</span>
+                    <span className="metric-label">Símbolo lido (pos. {currentStep.index})</span>
+                    <span className="metric-value metric-symbol">{currentStep.symbol}</span>
                   </div>
 
                   <div className="step-metric">
                     <span className="metric-label">Estados ativos antes</span>
                     <div className="state-badge-row">
-                      {currentStep.estadosAntes.length > 0 ? (
-                        currentStep.estadosAntes.map((s) => (
-                          <span key={s} className="state-pill">
-                            {s}
+                      {currentStep.statesBefore.length > 0 ? (
+                        currentStep.statesBefore.map((state) => (
+                          <span key={state} className="state-pill">
+                            {state}
                           </span>
                         ))
                       ) : (
@@ -246,10 +247,10 @@ export function SimulationPanel({
                   <div className="step-metric">
                     <span className="metric-label">Estados ativos depois</span>
                     <div className="state-badge-row">
-                      {currentStep.estadosDepois.length > 0 ? (
-                        currentStep.estadosDepois.map((s) => (
-                          <span key={s} className="state-pill state-pill-active">
-                            {s}
+                      {currentStep.statesAfter.length > 0 ? (
+                        currentStep.statesAfter.map((state) => (
+                          <span key={state} className="state-pill state-pill-active">
+                            {state}
                           </span>
                         ))
                       ) : (
@@ -259,14 +260,14 @@ export function SimulationPanel({
                   </div>
                 </div>
 
-                {currentStep.transicoesDisparadas.length > 0 && (
+                {currentStep.firedTransitions.length > 0 && (
                   <div className="fired-transitions-box">
                     <span className="fired-title">Transições avaliadas neste passo:</span>
                     <div className="fired-list">
-                      {currentStep.transicoesDisparadas.map((t, idx) => (
-                        <code key={`${t.origem}-${idx}`} className="fired-formula">
-                          δ({t.origem}, {t.simbolo}) ={' '}
-                          {t.destinos.length > 0 ? `{${t.destinos.join(', ')}}` : '∅'}
+                      {currentStep.firedTransitions.map((transition, idx) => (
+                        <code key={`${transition.from}-${idx}`} className="fired-formula">
+                          δ({transition.from}, {transition.symbol}) ={' '}
+                          {transition.to.length > 0 ? `{${transition.to.join(', ')}}` : '∅'}
                         </code>
                       ))}
                     </div>
@@ -279,30 +280,30 @@ export function SimulationPanel({
           {/* Final verdict */}
           {isFinished && (
             <div
-              className={`verdict-banner ${simulation.aceita ? 'verdict-accepted' : 'verdict-rejected'}`}
+              className={`verdict-banner ${simulation.accepted ? 'verdict-accepted' : 'verdict-rejected'}`}
               role="status"
             >
               <div className="verdict-header">
                 <span className="verdict-status">
-                  {simulation.aceita ? 'PALAVRA ACEITA' : 'PALAVRA REJEITADA'}
+                  {simulation.accepted ? 'PALAVRA ACEITA' : 'PALAVRA REJEITADA'}
                 </span>
                 <span className="verdict-word">
-                  Entrada: <code>{simulation.palavraVazia ? 'ε (vazia)' : simulation.palavra}</code>
+                  Entrada: <code>{simulation.isEmptyWord ? 'ε (vazia)' : simulation.word}</code>
                 </span>
               </div>
-              <p className="verdict-reason">{simulation.justificativa}</p>
+              <p className="verdict-reason">{simulation.justification}</p>
               <div className="verdict-states">
                 <span>Estados ativos ao final:</span>
-                {simulation.estadosFinaisAtivos.length > 0 ? (
-                  simulation.estadosFinaisAtivos.map((estado) => {
-                    const isAcc = simulation.estadosAceitacaoAlcancados.includes(estado);
+                {simulation.finalActiveStates.length > 0 ? (
+                  simulation.finalActiveStates.map((state) => {
+                    const isAccepting = simulation.reachedAcceptingStates.includes(state);
                     return (
                       <span
-                        key={estado}
-                        className={`state-pill ${isAcc ? 'state-pill-accepting' : ''}`}
+                        key={state}
+                        className={`state-pill ${isAccepting ? 'state-pill-accepting' : ''}`}
                       >
-                        {estado}
-                        {isAcc ? ' (aceitação)' : ''}
+                        {state}
+                        {isAccepting ? ' (aceitação)' : ''}
                       </span>
                     );
                   })
@@ -314,7 +315,7 @@ export function SimulationPanel({
           )}
 
           {/* Step history */}
-          {simulation.passos.length > 0 && (
+          {simulation.steps.length > 0 && (
             <div className="history-section">
               <h3>Histórico de leitura</h3>
               <div className="table-scroll">
@@ -328,30 +329,30 @@ export function SimulationPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {simulation.passos.map((passo) => {
-                      const isCurrent = passo.indice === currentStepIndex;
-                      const isFuture = passo.indice > currentStepIndex;
+                    {simulation.steps.map((step) => {
+                      const isCurrent = step.index === currentStepIndex;
+                      const isFuture = step.index > currentStepIndex;
                       return (
                         <tr
-                          key={passo.indice}
+                          key={step.index}
                           className={[
                             isCurrent ? 'history-row-current' : '',
                             isFuture ? 'history-row-future' : '',
                           ]
                             .filter(Boolean)
                             .join(' ')}
-                          onClick={() => onJumpToStep(passo.indice)}
+                          onClick={() => onJumpToStep(step.index)}
                         >
-                          <td className="mono">{passo.indice}</td>
-                          <td className="mono">{passo.simbolo}</td>
+                          <td className="mono">{step.index}</td>
+                          <td className="mono">{step.symbol}</td>
                           <td className="mono">
-                            {passo.estadosAntes.length > 0
-                              ? `{${passo.estadosAntes.join(', ')}}`
+                            {step.statesBefore.length > 0
+                              ? `{${step.statesBefore.join(', ')}}`
                               : '∅'}
                           </td>
                           <td className="mono">
-                            {passo.estadosDepois.length > 0
-                              ? `{${passo.estadosDepois.join(', ')}}`
+                            {step.statesAfter.length > 0
+                              ? `{${step.statesAfter.join(', ')}}`
                               : '∅'}
                           </td>
                         </tr>
